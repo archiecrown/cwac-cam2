@@ -20,14 +20,13 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +37,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import de.greenrobot.event.EventBus;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
 
 /**
  * Base class for activities that integrate with CameraFragment
@@ -138,6 +142,13 @@ abstract public class AbstractCameraActivity extends Activity {
    */
   public static final String EXTRA_ORIENTATION_LOCK_MODE=
     "cwac_cam2_olock_mode";
+  /**
+   * Extra name for whether the camera should allow zoom and
+   * how. Value should be a ZoomStyle (NONE, PINCH, SEEKBAR).
+   * Default is NONE.
+   */
+  public static final String EXTRA_ZOOM_STYLE=
+    "cwac_cam2_zoom_style";
 
   /**
    * @return true if the activity wants FEATURE_ACTION_BAR_OVERLAY,
@@ -401,13 +412,24 @@ abstract public class AbstractCameraActivity extends Activity {
 
   protected void lockOrientation(OrientationLockMode mode) {
     if (mode==null || mode==OrientationLockMode.DEFAULT) {
-      setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+      int orientation=getResources().getConfiguration().orientation;
+
+      if (orientation==Configuration.ORIENTATION_LANDSCAPE){
+        setRequestedOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+      }
+      else if (orientation==Configuration.ORIENTATION_PORTRAIT){
+        setRequestedOrientation(SCREEN_ORIENTATION_PORTRAIT);
+      }
+      else {
+        setRequestedOrientation(SCREEN_ORIENTATION_UNSPECIFIED);
+      }
     }
     else if (mode==OrientationLockMode.LANDSCAPE) {
-      setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+      setRequestedOrientation(SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
     else {
-      setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+      setRequestedOrientation(
+          SCREEN_ORIENTATION_SENSOR_PORTRAIT);
     }
   }
 
@@ -714,6 +736,18 @@ abstract public class AbstractCameraActivity extends Activity {
      */
     public T orientationLockMode(OrientationLockMode mode) {
       result.putExtra(EXTRA_ORIENTATION_LOCK_MODE, mode);
+
+      return((T)this);
+    }
+
+    /**
+     * Call to configure the ZoomStyle to be used. Default
+     * is NONE.
+     *
+     * @return the builder, for further configuration
+     */
+    public T zoomStyle(ZoomStyle zoomStyle) {
+      result.putExtra(EXTRA_ZOOM_STYLE, zoomStyle);
 
       return((T)this);
     }
